@@ -1,0 +1,23 @@
+server:
+  port: 8222
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: api_route
+          uri: http://localhost:8111
+          predicates:
+            - Path=/api/**
+# Dubbo和注册中心
+dubbo:
+  application:
+    name: dubbo-springboot-demo-consumer
+    qos-enable: true
+    qos-port: 22224
+    qos-accept-foreign-ip: false
+  protocol:
+    name: dubbo
+    port: 22223
+  registry:
+    address: nacos://localhost:8848
+    id: nacos-registry

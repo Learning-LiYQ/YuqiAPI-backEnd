@@ -44,8 +44,8 @@ import java.util.stream.Collectors;
 /**
  * 帖子服务实现
  *
- * @author <a href="https://github.com/lilyq">程序员鱼皮</a>
- * @from <a href="https://lyq.icu">编程导航知识星球</a>
+ * @author lyq
+ * @from liyuqi home
  */
 @Service
 @Slf4j

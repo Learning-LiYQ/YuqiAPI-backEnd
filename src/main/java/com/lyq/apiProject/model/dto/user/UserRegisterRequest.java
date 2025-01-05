@@ -7,17 +7,25 @@ import java.io.Serializable;
 /**
  * 用户注册请求体
  *
- * @author <a href="https://github.com/lilyq">程序员鱼皮</a>
- * @from <a href="https://lyq.icu">编程导航知识星球</a>
+ * @author lyq
+ * @from liyuqi home
  */
 @Data
 public class UserRegisterRequest implements Serializable {
 
     private static final long serialVersionUID = 3191241716373120793L;
 
+    private String userName;
+
     private String userAccount;
 
     private String userPassword;
 
     private String checkPassword;
+
+    private String phoneNum;
+
+    private String phoneCaptcha;
+
+    private String captcha;
 }

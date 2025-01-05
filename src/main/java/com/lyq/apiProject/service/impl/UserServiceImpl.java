@@ -12,6 +12,7 @@ import com.lyq.apiProject.constant.CommonConstant;
 import com.lyq.apiProject.exception.BusinessException;
 import com.lyq.apiProject.mapper.UserMapper;
 import com.lyq.apiProject.model.dto.user.UserQueryRequest;
+import com.lyq.apiProject.model.dto.user.UserRegisterRequest;
 import com.lyq.apiProject.model.enums.UserRoleEnum;
 import com.lyq.apiProject.model.vo.LoginUserVO;
 import com.lyq.apiProject.model.vo.UserVO;
@@ -59,10 +60,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private static final String CAPTCHA_PREFIX = "api:captchaId:";
 
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword) {
+    public long userRegister(UserRegisterRequest userRegisterRequest, HttpServletRequest request) {
+        // 获取参数
+        String userName = userRegisterRequest.getUserName();
+        String userAccount = userRegisterRequest.getUserAccount();
+        String userPassword = userRegisterRequest.getUserPassword();
+        String checkPassword = userRegisterRequest.getCheckPassword();
+        String captcha = userRegisterRequest.getCaptcha();
         // 1. 校验
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+        }
+        if (userName.length() > 7) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户昵称应该小于7个字！");
         }
         if (userAccount.length() < 4) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
@@ -74,6 +84,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
         }
+        // 校验图形验证码
+        String signature = request.getHeader("signature");
+        if (StringUtils.isBlank(signature)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "图形验证码标识为空");
+        }
+        String checkCaptcha = redisTemplate.opsForValue().get(CAPTCHA_PREFIX + signature);
+        if (StringUtils.isBlank(checkCaptcha) || !checkCaptcha.equals(captcha)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "图形验证码过期或输入错误");
+        }
+        // todo: 校验手机验证码
+
         synchronized (userAccount.intern()) {
             // 账户不能重复
             QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -89,8 +110,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             String secretKey = DigestUtils.md5DigestAsHex((SALT + userAccount + RandomUtil.randomNumbers(8)).getBytes());
             // 3. 插入数据
             User user = new User();
+            user.setUserName(userName);
             user.setUserAccount(userAccount);
             user.setUserPassword(encryptPassword);
+            user.setAccessKey(accessKey);
+            user.setSecretKey(secretKey);
             boolean saveResult = this.save(user);
             if (!saveResult) {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");

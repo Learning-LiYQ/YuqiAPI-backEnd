@@ -13,8 +13,8 @@ import org.springframework.context.annotation.Configuration;
 /**
  * 腾讯云对象存储客户端
  *
- * @author <a href="https://github.com/lilyq">程序员鱼皮</a>
- * @from <a href="https://lyq.icu">编程导航知识星球</a>
+ * @author lyq
+ * @from liyuqi home
  */
 @Configuration
 @ConfigurationProperties(prefix = "cos.client")

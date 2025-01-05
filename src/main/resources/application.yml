@@ -13,7 +13,7 @@ spring:
   # session 配置
   session:
     # todo 取消注释开启分布式 session（须先配置 Redis）
-    # store-type: redis
+    store-type: redis
     # 30 天过期
     timeout: 2592000
   # 数据库配置
@@ -27,7 +27,7 @@ spring:
   # todo 需替换配置，然后取消注释
   redis:
     database: 1
-    host: 172.20.119.8
+    host: 172.20.126.191
     port: 6379
     timeout: 5000
 #    password: 123456

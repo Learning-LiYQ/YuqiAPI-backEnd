@@ -1,5 +1,8 @@
 package com.lyq.apiProject.service.impl;
 
+import cn.hutool.captcha.CaptchaUtil;
+import cn.hutool.captcha.LineCaptcha;
+import cn.hutool.captcha.generator.RandomGenerator;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -19,12 +22,17 @@ import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.lyq.apiProject.constant.UserConstant.USER_LOGIN_STATE;
@@ -37,11 +45,18 @@ import static com.lyq.apiProject.constant.UserConstant.USER_LOGIN_STATE;
 @Service
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+    @Resource
+    private RedisTemplate<String,String> redisTemplate;
 
     /**
      * 盐值，混淆密码
      */
     public static final String SALT = "lyq";
+
+    /**
+     * 图片验证码 redis 前缀
+     */
+    private static final String CAPTCHA_PREFIX = "api:captchaId:";
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -249,6 +264,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userList.stream().map(this::getUserVO).collect(Collectors.toList());
     }
 
+    /**
+     *
+     * @param userQueryRequest
+     * @return
+     */
     @Override
     public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
         if (userQueryRequest == null) {
@@ -272,5 +292,63 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
+    }
+
+    /**
+     * 获取验证码
+     * @param request
+     * @param response
+     */
+    @Override
+    public void getCaptcha(HttpServletRequest request, HttpServletResponse response) {
+        //在前端发送请求时携带captchaId，用于标识不同的用户。
+        String signature = request.getHeader("signature");
+        if (StringUtils.isEmpty(signature)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        try {
+            // 自定义纯数字的验证码（随机4位数字，可重复）
+            RandomGenerator randomGenerator = new RandomGenerator("0123456789", 4);
+            LineCaptcha lineCaptcha = CaptchaUtil.createLineCaptcha(100, 30);
+            lineCaptcha.setGenerator(randomGenerator);
+            //设置响应头
+            response.setContentType("image/jpeg");
+            response.setHeader("Pragma", "No-cache");
+            // 输出到页面
+            lineCaptcha.write(response.getOutputStream());
+            // 打印日志
+            log.info("captchaId：{} ----生成的验证码:{}", signature, lineCaptcha.getCode());
+            // 将验证码设置到Redis中,2分钟过期
+            redisTemplate.opsForValue().set(CAPTCHA_PREFIX + signature, lineCaptcha.getCode(), 2, TimeUnit.MINUTES);
+            // 关闭流
+            response.getOutputStream().close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 发送短信验证码
+     * @param phoneNum
+     * @return
+     */
+    @Override
+    public Boolean sendSmsCaptcha(String phoneNum) {
+        // todo:完善发送短信功能
+//        AuthPhoneNumberUtil authPhoneNumberUtil = new AuthPhoneNumberUtil();
+//
+//        // 手机号码格式校验
+//        boolean checkPhoneNum = authPhoneNumberUtil.isPhoneNum(phoneNum);
+//        if (!checkPhoneNum) {
+//            throw new BusinessException(ErrorCode.PARAMS_ERROR, "手机号格式错误");
+//        }
+//
+//        //生成随机验证码
+//        int code = (int) ((Math.random() * 9 + 1) * 10000);
+//        SmsDTO smsDTO = new SmsDTO(phoneNum,String.valueOf(code));
+//
+//        return smsUtils.sendSms(smsDTO);
+        return true;
     }
 }

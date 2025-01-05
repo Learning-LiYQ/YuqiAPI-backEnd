@@ -9,6 +9,7 @@ import com.lyq.yuqiapicommon.model.entity.User;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -119,4 +120,17 @@ public interface UserService extends IService<User> {
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
+    /**
+     * 生成图像验证码
+     * @param request
+     * @param response
+     */
+    void getCaptcha(HttpServletRequest request, HttpServletResponse response);
+
+    /**
+     * 发送短信验证码
+     * @param phoneNum
+     * @return
+     */
+    Boolean sendSmsCaptcha(String phoneNum);
 }

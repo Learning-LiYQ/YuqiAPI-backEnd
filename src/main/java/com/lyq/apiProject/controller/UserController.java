@@ -305,4 +305,32 @@ public class UserController {
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
     }
+
+    /**
+     * 获取图形验证码
+     * @param request
+     * @param response
+     */
+    @GetMapping("/getCaptcha")
+    public void getCaptcha(HttpServletRequest request, HttpServletResponse response) {
+        userService.getCaptcha(request, response);
+    }
+
+    /**
+     * 发送短信验证码
+     * @param phoneNum
+     * @return
+     */
+    @GetMapping("/smsCaptcha")
+    public BaseResponse<String> smsCaptcha(@RequestParam String phoneNum) {
+        if (StringUtils.isEmpty(phoneNum)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "手机号不能为空");
+        }
+
+        boolean res = userService.sendSmsCaptcha(phoneNum);
+        // todo:校验发送短信是否成功
+//        if (!res)
+//            return ResultUtils.success("获取短信验证码成功！");
+        return ResultUtils.success("获取短信验证码成功！");
+    }
 }

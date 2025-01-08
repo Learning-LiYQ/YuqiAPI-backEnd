@@ -7,7 +7,6 @@ create database if not exists my_db;
 
 -- 切换库
 use my_db;
-1840007748463607810,liyuqi,aa0a92e1eaa34401fcdde47dac8ef6d9,,,lyq,https://g.csdnimg.cn/common/csdn-footer/images/badge.png,,admin,2024-09-28 20:36:47,2024-10-07 21:04:50,0
 
 -- 用户表
 create table if not exists user
@@ -21,6 +20,7 @@ create table if not exists user
     userAvatar   varchar(1024)                          null comment '用户头像',
     userProfile  varchar(512)                           null comment '用户简介',
     userRole     varchar(256) default 'user'            not null comment '用户角色：user/admin/ban',
+    userPhone    varchar(16)                            null comment '用户手机号',
     `accessKey` varchar(512) not null comment 'accessKey',
     `secretKey` varchar(512) not null comment 'secretKey',
     createTime   datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
@@ -106,3 +106,6 @@ from user_interface_info
 group by interfaceInfoId
 order by totalNum desc
 limit 3;
+
+# 1840007748463607810,liyuqi,aa0a92e1eaa34401fcdde47dac8ef6d9,,,lyq,https://g.csdnimg.cn/common/csdn-footer/images/badge.png,,admin,liyuqi,abcdef,2024-10-13 18:49:41,2024-10-13 18:49:41,0
+# 1875911392865996802,test1234,a4635f8924cefe11226adfb73f90cc1a,,,test1,,,user,4d2d1dd9705184efd79ff14c4df6a351,88c16da3ea1d75ecc988a9f20850d9b3,2025-01-05 22:25:03,2025-01-05 22:25:03,0

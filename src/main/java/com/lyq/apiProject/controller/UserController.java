@@ -316,7 +316,7 @@ public class UserController {
      * @return
      */
     @GetMapping("/smsCaptcha")
-    public BaseResponse<String> smsCaptcha(@RequestParam String phoneNum) {
+    public BaseResponse<String> getSmsCaptcha(@RequestParam String phoneNum) {
         if (StringUtils.isEmpty(phoneNum)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "手机号不能为空");
         }

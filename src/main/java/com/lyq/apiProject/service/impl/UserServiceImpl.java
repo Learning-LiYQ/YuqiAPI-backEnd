@@ -8,15 +8,19 @@ import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lyq.apiProject.common.ErrorCode;
+import com.lyq.apiProject.common.SmsUtils;
 import com.lyq.apiProject.constant.CommonConstant;
+import com.lyq.apiProject.constant.RedisConstant;
 import com.lyq.apiProject.exception.BusinessException;
 import com.lyq.apiProject.mapper.UserMapper;
 import com.lyq.apiProject.model.dto.user.UserQueryRequest;
 import com.lyq.apiProject.model.dto.user.UserRegisterRequest;
+import com.lyq.apiProject.model.dto.user.UserSmsDTO;
 import com.lyq.apiProject.model.enums.UserRoleEnum;
 import com.lyq.apiProject.model.vo.LoginUserVO;
 import com.lyq.apiProject.model.vo.UserVO;
 import com.lyq.apiProject.service.UserService;
+import com.lyq.apiProject.utils.PhoneNumberUtils;
 import com.lyq.apiProject.utils.SqlUtils;
 import com.lyq.yuqiapicommon.model.entity.User;
 import lombok.extern.slf4j.Slf4j;
@@ -48,16 +52,13 @@ import static com.lyq.apiProject.constant.UserConstant.USER_LOGIN_STATE;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     @Resource
     private RedisTemplate<String,String> redisTemplate;
+    @Resource
+    private SmsUtils smsUtils;
 
     /**
      * 盐值，混淆密码
      */
     public static final String SALT = "lyq";
-
-    /**
-     * 图片验证码 redis 前缀
-     */
-    private static final String CAPTCHA_PREFIX = "api:captchaId:";
 
     @Override
     public long userRegister(UserRegisterRequest userRegisterRequest, HttpServletRequest request) {
@@ -89,7 +90,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (StringUtils.isBlank(signature)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "图形验证码标识为空");
         }
-        String checkCaptcha = redisTemplate.opsForValue().get(CAPTCHA_PREFIX + signature);
+        String checkCaptcha = redisTemplate.opsForValue().get(RedisConstant.CAPTCHA_PREFIX + signature);
         if (StringUtils.isBlank(checkCaptcha) || !checkCaptcha.equals(captcha)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "图形验证码过期或输入错误");
         }
@@ -344,7 +345,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // 打印日志
             log.info("captchaId：{} ----生成的验证码:{}", signature, lineCaptcha.getCode());
             // 将验证码设置到Redis中,2分钟过期
-            redisTemplate.opsForValue().set(CAPTCHA_PREFIX + signature, lineCaptcha.getCode(), 2, TimeUnit.MINUTES);
+            redisTemplate.opsForValue().set(RedisConstant.CAPTCHA_PREFIX + signature, lineCaptcha.getCode(), 2, TimeUnit.MINUTES);
             // 关闭流
             response.getOutputStream().close();
         } catch (IOException e) {
@@ -360,19 +361,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public Boolean sendSmsCaptcha(String phoneNum) {
         // todo:完善发送短信功能
-//        AuthPhoneNumberUtil authPhoneNumberUtil = new AuthPhoneNumberUtil();
-//
-//        // 手机号码格式校验
-//        boolean checkPhoneNum = authPhoneNumberUtil.isPhoneNum(phoneNum);
-//        if (!checkPhoneNum) {
-//            throw new BusinessException(ErrorCode.PARAMS_ERROR, "手机号格式错误");
-//        }
-//
-//        //生成随机验证码
-//        int code = (int) ((Math.random() * 9 + 1) * 10000);
-//        SmsDTO smsDTO = new SmsDTO(phoneNum,String.valueOf(code));
-//
-//        return smsUtils.sendSms(smsDTO);
-        return true;
+        // 手机号码格式校验
+        if (!PhoneNumberUtils.isPhoneNumber(phoneNum)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "手机号格式错误");
+        }
+
+        //生成随机验证码
+        int code = (int) ((Math.random() * 9 + 1) * 10000);
+        UserSmsDTO smsDTO = new UserSmsDTO(phoneNum, String.valueOf(code));
+
+        return smsUtils.sendSms(smsDTO);
     }
 }

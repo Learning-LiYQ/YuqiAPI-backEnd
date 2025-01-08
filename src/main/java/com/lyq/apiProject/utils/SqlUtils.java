@@ -4,8 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * SQL 工具
- *
- * @author lyq
+  @author lyq
  */
 public class SqlUtils {
 
